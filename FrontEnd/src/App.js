@@ -1,14 +1,15 @@
 import './App.css';
 import { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Box, Button, Stack, useMediaQuery, ListItemIcon, ListItemText} from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Box, Button, Stack, useMediaQuery, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions} from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { MenuRounded, LocationOn, Cancel, TrackChanges, CrisisAlert, CameraRounded, Settings} from '@mui/icons-material';
+import { MenuRounded, LocationOn, Cancel, TrackChanges, CrisisAlert, CameraRounded, Settings, ArrowBack} from '@mui/icons-material';
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { BatteryChargingFull, SignalCellular4Bar } from '@mui/icons-material';
 
 const AppWrapper = styled('div')({
   flexGrow: 1,
+  overflow:'hidden'
 });
 
 const theme = createTheme();
@@ -16,18 +17,36 @@ const theme = createTheme();
 function App() {
 
   const handleSwarmDrone = () => {
-    // Logic to swarm the drone
-    console.log('Swarming the drone...');
+    // Send API request to server
+    axios.post('https://example.com/drones/swarmdrone', { droneId: selectedDrone.id })
+      .then((response) => {
+        console.log('Drone swarm request sent successfully:', response.data);
+      })
+      .catch((error) => {
+        console.error('Failed to send Drone swarm request:', error);
+      });
   };
 
   const handleIgnore = () => {
-    // Logic to ignore the drone
-    console.log('Ignoring the drone...');
+    // Send API request to server
+    axios.post('https://example.com/drones/ignore', { droneId: selectedDrone.id })
+      .then((response) => {
+        console.log('Ignore request sent successfully:', response.data);
+      })
+      .catch((error) => {
+        console.error('Failed to send ignore request:', error);
+      });
   };
 
   const handleKeepTracking = () => {
-    // Logic to keep tracking the drone
-    console.log('Keeping track of the drone...');
+    // Send API request to server
+    axios.post('https://example.com/drones/keep-tracking', { droneId: selectedDrone.id })
+      .then((response) => {
+        console.log('Keep tracking request sent successfully:', response.data);
+      })
+      .catch((error) => {
+        console.error('Failed to send keep tracking request:', error);
+      });
   };
 
   const isPortrait = useMediaQuery('(orientation: portrait)');
@@ -45,7 +64,17 @@ function App() {
     };
     setAnchorEl(null);
   };
-  
+
+  const [showSettings, setShowSettings] = useState(false); // State variable for settings window visibility
+
+  const handleSettingsOpen = () => {
+    setShowSettings(true);
+  };
+
+  const handleSettingsClose = () => {
+    setShowSettings(false);
+  };
+
   const [selectedDrone, setSelectedDrone] = useState({
     id: 0,
     name: '',
@@ -63,23 +92,23 @@ function App() {
     batteryStatus: 100,
     connectionStatus: 100},
     {id: 2,
-      name: "Drone 2",
-      ipAddress: "1.1.1.1",
-      alert: false,
-      batteryStatus: 100,
-      connectionStatus: 100},
-      {id: 2,
-        name: "Drone 2",
-        ipAddress: "1.1.1.1",
-        alert: false,
-        batteryStatus: 100,
-        connectionStatus: 100},
-        {id: 2,
-          name: "Drone 2",
-          ipAddress: "1.1.1.1",
-          alert: false,
-          batteryStatus: 100,
-          connectionStatus: 100}
+    name: "Drone 2",
+    ipAddress: "1.1.1.1",
+    alert: false,
+    batteryStatus: 100,
+    connectionStatus: 100},
+    {id: 2,
+    name: "Drone 2",
+    ipAddress: "1.1.1.1",
+    alert: false,
+    batteryStatus: 100,
+    connectionStatus: 100},
+    {id: 2,
+    name: "Drone 2",
+    ipAddress: "1.1.1.1",
+    alert: false,
+    batteryStatus: 100,
+    connectionStatus: 100}
   ]);
 
   useEffect(() => {
@@ -107,6 +136,44 @@ function App() {
     const intervalId = setInterval(fetchDroneStatus, 5000); // Fetch status every 5 seconds
     return () => clearInterval(intervalId); // Clean up the interval when component unmounts
   }, []);
+
+  const SettingsWindow = () => {
+    return (
+      <Dialog open={showSettings} onClose={handleSettingsClose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="back"
+              onClick={handleSettingsClose}
+              sx={{ mr: 1 }}
+            >
+              <ArrowBack />
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
+              Settings
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="h6" gutterBottom>
+            Selected Drone
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            ID: {selectedDrone.id}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            Name: {selectedDrone.name}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            IP Address: {selectedDrone.ipAddress}
+          </Typography>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -172,15 +239,15 @@ function App() {
                 </MenuItem>
               ))}
             </Menu>
-            <Typography variant="h6">{selectedDrone.name}</Typography>
+            <Typography variant="h6" align="center" flexGrow="1">{selectedDrone.name}</Typography>
             <IconButton
               size="large"
-              edge="start"
+              edge="end"
               color="inherit"
               aria-label="settings"
               aria-controls="menu-appbar"
               aria-haspopup="true"
-              onClick={null}
+              onClick={handleSettingsOpen}
             >
               <Settings />
             </IconButton>
@@ -191,7 +258,7 @@ function App() {
             display="flex"
             justifyContent="center"
             alignItems="center"
-            height="calc(100vh - 64px)" // Adjust the height to fit your layout
+            height="calc(60vh - 64px)" // Adjust the height to fit your layout
             bgcolor="#000000" // Set the desired background color
           >
             <Box position="absolute" top={16} left={16}>
@@ -213,15 +280,32 @@ function App() {
             </Box>
           </Box>
           {isPortrait ? (
-          <Box display="flex" justifyContent="center" alignItems="center" p={2}>
-            <Stack direction="row" spacing={2}>
-              <Button variant="contained" startIcon={<LocationOn />} onClick={handleSwarmDrone}>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            p={2}>
+            <Stack
+              direction="row"
+              flexWrap="wrap"
+              gap={2}
+              justifyContent="flex-start">
+              <Button
+                variant="contained"
+                startIcon={<LocationOn />}
+                onClick={handleSwarmDrone}>
                 Swarm Drone
               </Button>
-              <Button variant="contained" startIcon={<Cancel />} onClick={handleIgnore}>
+              <Button
+                variant="contained"
+                startIcon={<Cancel />}
+                onClick={handleIgnore}>
                 Ignore
               </Button>
-              <Button variant="contained" startIcon={<TrackChanges />} onClick={handleKeepTracking}>
+              <Button
+                variant="contained"
+                startIcon={<TrackChanges />}
+                onClick={handleKeepTracking}>
                 Keep-Tracking
               </Button>
             </Stack>
@@ -279,6 +363,7 @@ function App() {
           </Box>
         )}
         </Box>
+        <SettingsWindow />
       </AppWrapper>
     </ThemeProvider>
   );
