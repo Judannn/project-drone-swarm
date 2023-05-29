@@ -18,7 +18,7 @@ function App() {
 
   const handleSwarmDrone = () => {
     // Send API request to server
-    axios.post('https://example.com/drones/swarmdrone', { droneId: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/swarmdrone', { droneId: selectedDrone.id })
       .then((response) => {
         console.log('Drone swarm request sent successfully:', response.data);
       })
@@ -29,7 +29,7 @@ function App() {
 
   const handleIgnore = () => {
     // Send API request to server
-    axios.post('https://example.com/drones/ignore', { droneId: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/ignore', { droneId: selectedDrone.id })
       .then((response) => {
         console.log('Ignore request sent successfully:', response.data);
       })
@@ -40,7 +40,7 @@ function App() {
 
   const handleKeepTracking = () => {
     // Send API request to server
-    axios.post('https://example.com/drones/keep-tracking', { droneId: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/keep-tracking', { droneId: selectedDrone.id })
       .then((response) => {
         console.log('Keep tracking request sent successfully:', response.data);
       })
@@ -76,7 +76,7 @@ function App() {
   };
 
   const [selectedDrone, setSelectedDrone] = useState({
-    id: 0,
+    id: 1,
     name: '',
     ipAddress: '',
     alert: false,
@@ -84,38 +84,14 @@ function App() {
     connectionStatus: '',
   });
 
-  const [connectedDrones, setConnectedDrones] = useState([
-    {id: 1,
-    name: "Drone 1",
-    ipAddress: "1.1.1.1",
-    alert: false,
-    batteryStatus: 100,
-    connectionStatus: 100},
-    {id: 2,
-    name: "Drone 2",
-    ipAddress: "1.1.1.1",
-    alert: false,
-    batteryStatus: 100,
-    connectionStatus: 100},
-    {id: 2,
-    name: "Drone 2",
-    ipAddress: "1.1.1.1",
-    alert: false,
-    batteryStatus: 100,
-    connectionStatus: 100},
-    {id: 2,
-    name: "Drone 2",
-    ipAddress: "1.1.1.1",
-    alert: false,
-    batteryStatus: 100,
-    connectionStatus: 100}
-  ]);
+  var [connectedDrones, setConnectedDrones] = useState([]);
 
   useEffect(() => {
-    const fetchDroneStatus = async () => {
+    const fetchDrones = async () => {
       try {
-        const response = await axios.get('<YOUR_API_ENDPOINT>');
-        connectedDrones = response.data(connectedDrones);
+        const response = await axios.get('http://localhost:8000/drones');
+        console.log(response);
+        connectedDrones = response.data;
         const updatedConnectedDrones = connectedDrones.map((drone) => ({
           id: drone.id,
           name: drone.name,
@@ -129,11 +105,11 @@ function App() {
         const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
         setSelectedDrone(updatedSelectedDrone);
       } catch (error) {
-        console.error('Failed to fetch drone status:', error);
+        console.error('Failed to fetch drones:', error);
       }
     };
 
-    const intervalId = setInterval(fetchDroneStatus, 5000); // Fetch status every 5 seconds
+    const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
     return () => clearInterval(intervalId); // Clean up the interval when component unmounts
   }, []);
 
