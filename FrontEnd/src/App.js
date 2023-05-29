@@ -18,7 +18,7 @@ function App() {
 
   const handleSwarmDrone = () => {
     // Send API request to server
-    axios.post('http://localhost:8000/drones/swarmdrone', { droneId: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/swarmdrone', { id: selectedDrone.id })
       .then((response) => {
         console.log('Drone swarm request sent successfully:', response.data);
       })
@@ -29,7 +29,7 @@ function App() {
 
   const handleIgnore = () => {
     // Send API request to server
-    axios.post('http://localhost:8000/drones/ignore', { droneId: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/ignore', { id: selectedDrone.id })
       .then((response) => {
         console.log('Ignore request sent successfully:', response.data);
       })
@@ -40,7 +40,7 @@ function App() {
 
   const handleKeepTracking = () => {
     // Send API request to server
-    axios.post('http://localhost:8000/drones/keep-tracking', { droneId: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/keep-tracking', { id: 1 })
       .then((response) => {
         console.log('Keep tracking request sent successfully:', response.data);
       })

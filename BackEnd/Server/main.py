@@ -21,6 +21,9 @@ class Drone(BaseModel):
     batteryStatus: int
     connectionStatus: int
 
+class DroneId(BaseModel):
+    id: int
+
 connected_drones = [
     Drone(
         id=1,
@@ -59,9 +62,10 @@ async def swarm_drone():
     return {"message": "Drone swarm request received"}
 
 @app.post("/drones/ignore")
-async def ignore():
+async def ignore(droneid: DroneId):
     # Handle the ignore request
     # Your logic goes here
+    print(droneid.id)
     return {"message": "Ignore request received"}
 
 @app.post("/drones/keep-tracking")
