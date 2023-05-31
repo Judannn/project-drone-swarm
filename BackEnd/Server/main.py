@@ -30,16 +30,16 @@ connected_drones = [
         name="Drone 1",
         ipAddress="1.1.1.1",
         alert=False,
-        batteryStatus=100,
-        connectionStatus=100
+        batteryStatus=10,
+        connectionStatus=10
     ),
     Drone(
         id=2,
         name="Drone 2",
         ipAddress="1.1.1.1",
-        alert=False,
-        batteryStatus=100,
-        connectionStatus=100
+        alert=True,
+        batteryStatus=50,
+        connectionStatus=50
     ),
     Drone(
         id=3,

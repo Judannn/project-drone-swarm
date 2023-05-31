@@ -1,11 +1,11 @@
 import './App.css';
 import { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Box, Button, Stack, useMediaQuery, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions} from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Box, Button, Stack, useMediaQuery, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { MenuRounded, LocationOn, Cancel, TrackChanges, CrisisAlert, CameraRounded, Settings, ArrowBack} from '@mui/icons-material';
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { BatteryChargingFull, SignalCellular4Bar } from '@mui/icons-material';
+import { Battery0Bar, Battery1Bar, Battery2Bar, Battery3Bar, Battery4Bar, Battery5Bar, Battery6Bar, BatteryFull , SignalWifiStatusbarNull, Wifi1Bar, Wifi2Bar, Wifi } from '@mui/icons-material';
 
 const AppWrapper = styled('div')({
   flexGrow: 1,
@@ -91,7 +91,7 @@ function App() {
       try {
         const response = await axios.get('http://localhost:8000/drones');
         console.log(response);
-        connectedDrones = response.data;
+        const connectedDrones = response.data;
         const updatedConnectedDrones = connectedDrones.map((drone) => ({
           id: drone.id,
           name: drone.name,
@@ -111,7 +111,39 @@ function App() {
 
     const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
     return () => clearInterval(intervalId); // Clean up the interval when component unmounts
-  }, []);
+  }, [selectedDrone.id]);
+
+  const getStatusIcon = (status, isBattery) => {
+    const statusMappings = {
+      battery: [
+        { range: [0, 5], icon: <Battery0Bar fontSize="small" /> },
+        { range: [6, 15], icon: <Battery1Bar fontSize="small" /> },
+        { range: [16, 30], icon: <Battery2Bar fontSize="small" /> },
+        { range: [31, 45], icon: <Battery3Bar fontSize="small" /> },
+        { range: [46, 60], icon: <Battery4Bar fontSize="small" /> },
+        { range: [61, 75], icon: <Battery5Bar fontSize="small" /> },
+        { range: [76, 90], icon: <Battery6Bar fontSize="small" /> },
+        { range: [91, 100], icon: <BatteryFull fontSize="small" /> },
+      ],
+      connection: [
+        { range: [0, 5], icon: <SignalWifiStatusbarNull fontSize="small" /> },
+        { range: [4, 35], icon: <Wifi1Bar fontSize="small" /> },
+        { range: [36, 70], icon: <Wifi2Bar fontSize="small" /> },
+        { range: [71, 100], icon: <Wifi fontSize="small" /> },
+      ],
+    };
+  
+    const mappings = statusMappings[isBattery ? 'battery' : 'connection'];
+  
+    for (const mapping of mappings) {
+      const [start, end] = mapping.range;
+      if (status >= start && status <= end) {
+        return mapping.icon;
+      }
+    }
+  
+    return null; // Return null if no matching range is found
+  };
 
   const SettingsWindow = () => {
     return (
@@ -190,27 +222,19 @@ function App() {
                   onClick={() => handleMenuClose(drone.id)}
                 >
                   <ListItemIcon>
-                    {drone.alert ? <CrisisAlert /> : <CameraRounded />}
+                    {drone.alert ? <CrisisAlert color='error'/> : <CameraRounded />}
                   </ListItemIcon>
                   <ListItemText
                     primary={drone.name}
                     secondary={`Connection: ${
-                      drone.connected ? 'Connected' : 'Disconnected'
+                      drone.connectionStatus > 0  ? 'Connected' : 'Disconnected'
                     }`}
                   />
                   <ListItemIcon>
-                    {drone.connected ? (
-                      <SignalCellular4Bar fontSize="small" />
-                    ) : (
-                      <SignalCellular4Bar fontSize="small" color="disabled" />
-                    )}
+                    {getStatusIcon(drone.connectionStatus, false)}
                   </ListItemIcon>
                   <ListItemIcon>
-                    {drone.batteryLevel > 20 ? (
-                      <BatteryChargingFull fontSize="small" />
-                    ) : (
-                      <BatteryChargingFull fontSize="small" color="error" />
-                    )}
+                    {getStatusIcon(drone.batteryStatus, true)}
                   </ListItemIcon>
                 </MenuItem>
               ))}
@@ -238,21 +262,7 @@ function App() {
             bgcolor="#000000" // Set the desired background color
           >
             <Box position="absolute" top={16} left={16}>
-              {selectedDrone && (
-                <>
-                  {selectedDrone.connected ? (
-                    <SignalCellular4Bar fontSize="small" />
-                  ) : (
-                    <SignalCellular4Bar fontSize="small" color="error" />
-                  )}
-                  {selectedDrone.batteryLevel > 20 ? (
-                    <BatteryChargingFull fontSize="small" />
-                  ) : (
-                    null
-                    // <BatteryChargingFull fontSize="small" color="error" />
-                  )}
-                </>
-              )}
+              {getStatusIcon(selectedDrone.batteryStatus, true)}
             </Box>
           </Box>
           {isPortrait ? (
