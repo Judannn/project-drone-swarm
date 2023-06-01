@@ -1,11 +1,48 @@
 import './App.css';
-import { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Box, Button, Stack, useMediaQuery, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Box,
+  Button,
+  Stack,
+  useMediaQuery,
+  ListItemIcon,
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { MenuRounded, LocationOn, Cancel, TrackChanges, CrisisAlert, CameraRounded, Settings, ArrowBack} from '@mui/icons-material';
+import {
+  MenuRounded,
+  LocationOn,
+  Cancel,
+  TrackChanges,
+  CrisisAlert,
+  CameraRounded,
+  Settings,
+  ArrowBack,
+  Battery0Bar,
+  Battery1Bar,
+  Battery2Bar,
+  Battery3Bar,
+  Battery4Bar,
+  Battery5Bar,
+  Battery6Bar,
+  BatteryFull,
+  SignalWifiStatusbarNull,
+  Wifi1Bar,
+  Wifi2Bar,
+  Wifi
+} from '@mui/icons-material';
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { Battery0Bar, Battery1Bar, Battery2Bar, Battery3Bar, Battery4Bar, Battery5Bar, Battery6Bar, BatteryFull , SignalWifiStatusbarNull, Wifi1Bar, Wifi2Bar, Wifi } from '@mui/icons-material';
+import HLSPlayer from 'react-hls-player';
 
 const AppWrapper = styled('div')({
   flexGrow: 1,
@@ -87,30 +124,30 @@ function App() {
   var [connectedDrones, setConnectedDrones] = useState([]);
 
   useEffect(() => {
-    const fetchDrones = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/drones');
-        console.log(response);
-        const connectedDrones = response.data;
-        const updatedConnectedDrones = connectedDrones.map((drone) => ({
-          id: drone.id,
-          name: drone.name,
-          ipAddress: drone.ipAddress,
-          alert: drone.alert,
-          batteryStatus: drone.batteryStatus,
-          connectionStatus: drone.connectionStatus,
-        }));
-        setConnectedDrones(updatedConnectedDrones);
+    // const fetchDrones = async () => {
+    //   try {
+    //     const response = await axios.get('http://localhost:8000/drones');
+    //     console.log(response);
+    //     const connectedDrones = response.data;
+    //     const updatedConnectedDrones = connectedDrones.map((drone) => ({
+    //       id: drone.id,
+    //       name: drone.name,
+    //       ipAddress: drone.ipAddress,
+    //       alert: drone.alert,
+    //       batteryStatus: drone.batteryStatus,
+    //       connectionStatus: drone.connectionStatus,
+    //     }));
+    //     setConnectedDrones(updatedConnectedDrones);
 
-        const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
-        setSelectedDrone(updatedSelectedDrone);
-      } catch (error) {
-        console.error('Failed to fetch drones:', error);
-      }
-    };
+    //     const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
+    //     setSelectedDrone(updatedSelectedDrone);
+    //   } catch (error) {
+    //     console.error('Failed to fetch drones:', error);
+    //   }
+    // };
 
-    const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
-    return () => clearInterval(intervalId); // Clean up the interval when component unmounts
+    // const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
+    // return () => clearInterval(intervalId); // Clean up the interval when component unmounts
   }, [selectedDrone.id]);
 
   const getStatusIcon = (status, isBattery) => {
@@ -143,6 +180,20 @@ function App() {
     }
   
     return null; // Return null if no matching range is found
+  };
+
+  const VideoPlayer = () => {
+    return (
+      <div>
+        <HLSPlayer
+          url="http://localhost:8000/drone/video_feed"
+          playing={true}
+          controls={false}
+          width="100%"
+          height="auto"
+        />
+      </div>
+    );
   };
 
   const SettingsWindow = () => {
@@ -259,8 +310,9 @@ function App() {
             justifyContent="center"
             alignItems="center"
             height="calc(60vh - 64px)" // Adjust the height to fit your layout
-            bgcolor="#000000" // Set the desired background color
+            bgcolor="" // Set the desired background color
           >
+            <VideoPlayer />
             <Box position="absolute" top={16} left={16}>
               {getStatusIcon(selectedDrone.batteryStatus, true)}
             </Box>

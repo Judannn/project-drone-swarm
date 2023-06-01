@@ -1,7 +1,11 @@
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+from ffmpeg_streaming import input, Formats
+import asyncio
+
 
 app = FastAPI()
 
@@ -51,10 +55,6 @@ connected_drones = [
     )
 ]
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
 @app.post("/drones/swarmdrone")
 async def swarm_drone():
     # Handle the swarm drone request
@@ -77,6 +77,40 @@ async def keep_tracking():
 @app.get("/drones")
 async def get_drones():
     return connected_drones
+
+@app.get("/drone/video_feed")
+async def video_feed():
+    # Path to the video file or video capture device (e.g., webcam)
+    video_path = "./ForBiggerEscapes.mp4"
+
+    # Input video file
+    video = input(video_path)
+
+    # Create HLS output with auto-generated representations
+    hls_output = video.hls(Formats.h264())
+    hls_output.auto_generate_representations()
+
+    # Output the HLS playlist file
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, hls_output.output, './playlist.m3u8')
+
+    # Content type for HLS streaming
+    content_type = "application/vnd.apple.mpegurl"
+
+    # Return the playlist and the generator function for frame streaming
+    async def stream_generator():
+        with open("./playlist.m3u8", "rb") as file:
+            while True:
+                chunk = file.read(8192)
+                if not chunk:
+                    break
+                yield chunk
+
+    return StreamingResponse(
+        stream_generator(),
+        media_type=content_type,
+        headers={"Content-Disposition": 'attachment; filename="playlist.m3u8"'},
+    )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)
