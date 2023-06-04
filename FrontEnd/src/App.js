@@ -38,11 +38,12 @@ import {
   SignalWifiStatusbarNull,
   Wifi1Bar,
   Wifi2Bar,
-  Wifi
+  Wifi,
+  ArrowUpward,
+  ArrowDownward
 } from '@mui/icons-material';
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import HLSPlayer from 'react-hls-player';
 
 const AppWrapper = styled('div')({
   flexGrow: 1,
@@ -88,6 +89,9 @@ function App() {
 
   const isPortrait = useMediaQuery('(orientation: portrait)');
 
+  const [topBarVisible, setTopBarVisible] = useState(true);
+
+
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleMenuOpen = (event) => {
@@ -124,30 +128,30 @@ function App() {
   var [connectedDrones, setConnectedDrones] = useState([]);
 
   useEffect(() => {
-    // const fetchDrones = async () => {
-    //   try {
-    //     const response = await axios.get('http://localhost:8000/drones');
-    //     console.log(response);
-    //     const connectedDrones = response.data;
-    //     const updatedConnectedDrones = connectedDrones.map((drone) => ({
-    //       id: drone.id,
-    //       name: drone.name,
-    //       ipAddress: drone.ipAddress,
-    //       alert: drone.alert,
-    //       batteryStatus: drone.batteryStatus,
-    //       connectionStatus: drone.connectionStatus,
-    //     }));
-    //     setConnectedDrones(updatedConnectedDrones);
+    const fetchDrones = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/drones');
+        console.log(response);
+        const connectedDrones = response.data;
+        const updatedConnectedDrones = connectedDrones.map((drone) => ({
+          id: drone.id,
+          name: drone.name,
+          ipAddress: drone.ipAddress,
+          alert: drone.alert,
+          batteryStatus: drone.batteryStatus,
+          connectionStatus: drone.connectionStatus,
+        }));
+        setConnectedDrones(updatedConnectedDrones);
 
-    //     const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
-    //     setSelectedDrone(updatedSelectedDrone);
-    //   } catch (error) {
-    //     console.error('Failed to fetch drones:', error);
-    //   }
-    // };
+        const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
+        setSelectedDrone(updatedSelectedDrone);
+      } catch (error) {
+        console.error('Failed to fetch drones:', error);
+      }
+    };
 
-    // const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
-    // return () => clearInterval(intervalId); // Clean up the interval when component unmounts
+    const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
+    return () => clearInterval(intervalId); // Clean up the interval when component unmounts
   }, [selectedDrone.id]);
 
   const getStatusIcon = (status, isBattery) => {
@@ -180,20 +184,6 @@ function App() {
     }
   
     return null; // Return null if no matching range is found
-  };
-
-  const VideoPlayer = () => {
-    return (
-      <div>
-        <HLSPlayer
-          url="http://localhost:8000/drone/video_feed"
-          playing={true}
-          controls={false}
-          width="100%"
-          height="auto"
-        />
-      </div>
-    );
   };
 
   const SettingsWindow = () => {
@@ -234,12 +224,33 @@ function App() {
     );
   };
 
+  const VideoPlayer = () => {
+    const videoFeedUrl = 'http://localhost:8000/drone/video_feed';
+  
+    const isPortrait = useMediaQuery('(orientation: portrait)');
+    const wrapperStyles = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start', // Align to the top
+      height: isPortrait ? 'auto' : '100vh', // Adjust the height to fit your layout
+    };
+    const videoStyles = {
+      maxWidth: '100%',
+      maxHeight: '100%',
+    };
+  
+    return (
+      <div style={wrapperStyles}>
+        <img src={videoFeedUrl} style={videoStyles} alt="Video Feed" />
+      </div>
+    );
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <AppWrapper>
-        <AppBar position="static">
+        <AppBar position="static" style={{ display: topBarVisible ? 'block' : 'none' }}>
           <Toolbar>
-            
             <IconButton
               size="large"
               edge="start"
@@ -308,14 +319,50 @@ function App() {
           <Box
             display="flex"
             justifyContent="center"
-            alignItems="center"
-            height="calc(60vh - 64px)" // Adjust the height to fit your layout
-            bgcolor="" // Set the desired background color
+            alignItems="flex-start" // Align to the top
+            height="" // Adjust the height to fit your layout
           >
-            <VideoPlayer />
-            <Box position="absolute" top={16} left={16}>
-              {getStatusIcon(selectedDrone.batteryStatus, true)}
-            </Box>
+            <div className="player-wrapper">
+              <VideoPlayer />
+            </div>
+              <Stack spacing={1} position="absolute" top={8} left={8} direction="row">
+                <Box
+                  backgroundColor='rgba(0, 0, 0, 0.5)'
+                  color='#FFFFFF'
+                  backdropFilter="blur(4px)"
+                  borderRadius="4px"
+                  p={1}
+                >
+                  {getStatusIcon(selectedDrone.connectionStatus, false)}
+                </Box>
+                <Box
+                  backgroundColor='rgba(0, 0, 0, 0.5)'
+                  color='#FFFFFF'
+                  backdropFilter="blur(4px)"
+                  borderRadius="4px"
+                  p={1}
+                >
+                  {getStatusIcon(selectedDrone.batteryStatus, true)}
+                </Box>
+                
+              </Stack>
+              <Box position="absolute" top={8} right={8}>
+                <Box
+                    backgroundColor='rgba(0, 0, 0, 0.5)'
+                    color='#FFFFFF'
+                    backdropFilter="blur(4px)"
+                    borderRadius="4px"
+                  >
+                    <IconButton
+                      size="small"
+                      color="inherit"
+                      aria-label="toggle-top-bar"
+                      onClick={() => setTopBarVisible(!topBarVisible)}
+                    >
+                      {topBarVisible ? <ArrowUpward /> : <ArrowDownward />}
+                    </IconButton>
+                  </Box>
+              </Box>
           </Box>
           {isPortrait ? (
           <Box
@@ -351,7 +398,7 @@ function App() {
         ) : (
           <Box
             position="absolute"
-            bottom={16}
+            bottom={8}
             left={16}
             display="flex"
             justifyContent="center"

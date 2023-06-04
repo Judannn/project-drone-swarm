@@ -3,9 +3,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from ffmpeg_streaming import input, Formats
+import cv2
 import asyncio
-
 
 app = FastAPI()
 
@@ -34,7 +33,7 @@ connected_drones = [
         name="Drone 1",
         ipAddress="1.1.1.1",
         alert=False,
-        batteryStatus=10,
+        batteryStatus=50,
         connectionStatus=10
     ),
     Drone(
@@ -54,6 +53,9 @@ connected_drones = [
         connectionStatus=100
     )
 ]
+
+# Load the pre-trained car classifier
+car_cascade = cv2.CascadeClassifier('./haarcascade_car.xml')
 
 @app.post("/drones/swarmdrone")
 async def swarm_drone():
@@ -80,37 +82,54 @@ async def get_drones():
 
 @app.get("/drone/video_feed")
 async def video_feed():
-    # Path to the video file or video capture device (e.g., webcam)
-    video_path = "./ForBiggerEscapes.mp4"
+    # Path to the video file
+    video_path = "./traffic.mp4"
 
-    # Input video file
-    video = input(video_path)
+    # Open the video file
+    video = cv2.VideoCapture(video_path)
 
-    # Create HLS output with auto-generated representations
-    hls_output = video.hls(Formats.h264())
-    hls_output.auto_generate_representations()
+    # Get video properties
+    fps = video.get(cv2.CAP_PROP_FPS)
+    frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # Output the HLS playlist file
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, hls_output.output, './playlist.m3u8')
+    # Content type for streaming
+    content_type = "multipart/x-mixed-replace; boundary=frame"
 
-    # Content type for HLS streaming
-    content_type = "application/vnd.apple.mpegurl"
-
-    # Return the playlist and the generator function for frame streaming
+    # Define a function to read frames from the video and generate the stream
     async def stream_generator():
-        with open("./playlist.m3u8", "rb") as file:
-            while True:
-                chunk = file.read(8192)
-                if not chunk:
-                    break
-                yield chunk
+        while True:
+            # Read a frame from the video
+            ret, frame = video.read()
 
-    return StreamingResponse(
-        stream_generator(),
-        media_type=content_type,
-        headers={"Content-Disposition": 'attachment; filename="playlist.m3u8"'},
-    )
+            # If the video reaches the end, go back to the beginning (loop)
+            if not ret:
+                video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                continue
+
+            # Convert the frame to grayscale for car detection
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # Detect cars in the frame
+            cars = car_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+            # Draw rectangles around the detected cars
+            for (x, y, w, h) in cars:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+            # Convert the frame to JPEG format
+            _, jpeg_frame = cv2.imencode(".jpg", frame)
+
+            # Yield the frame as a chunk of data
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" + jpeg_frame.tobytes() + b"\r\n"
+            )
+
+            # Introduce a small delay to match the video's frame rate
+            await asyncio.sleep(1 / fps)
+
+    return StreamingResponse(stream_generator(), media_type=content_type)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)
