@@ -127,32 +127,32 @@ function App() {
 
   var [connectedDrones, setConnectedDrones] = useState([]);
 
+  const fetchDrones = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/drones');
+      console.log(response);
+      const connectedDrones = response.data;
+      const updatedConnectedDrones = connectedDrones.map((drone) => ({
+        id: drone.id,
+        name: drone.name,
+        ipAddress: drone.ipAddress,
+        alert: drone.alert,
+        batteryStatus: drone.batteryStatus,
+        connectionStatus: drone.connectionStatus,
+      }));
+      setConnectedDrones(updatedConnectedDrones);
+
+      const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
+      setSelectedDrone(updatedSelectedDrone);
+    } catch (error) {
+      console.error('Failed to fetch drones:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchDrones = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/drones');
-        console.log(response);
-        const connectedDrones = response.data;
-        const updatedConnectedDrones = connectedDrones.map((drone) => ({
-          id: drone.id,
-          name: drone.name,
-          ipAddress: drone.ipAddress,
-          alert: drone.alert,
-          batteryStatus: drone.batteryStatus,
-          connectionStatus: drone.connectionStatus,
-        }));
-        setConnectedDrones(updatedConnectedDrones);
-
-        const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
-        setSelectedDrone(updatedSelectedDrone);
-      } catch (error) {
-        console.error('Failed to fetch drones:', error);
-      }
-    };
-
     const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
     return () => clearInterval(intervalId); // Clean up the interval when component unmounts
-  }, [selectedDrone.id]);
+  });
 
   const getStatusIcon = (status, isBattery) => {
     const statusMappings = {

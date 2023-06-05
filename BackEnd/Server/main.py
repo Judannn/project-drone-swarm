@@ -5,16 +5,15 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import asyncio
+from djitellopy import Tello
+# from BackEnd.Drone.diploma-project-drone-swarm.mock.drone import TelloDrone
 
-app = FastAPI()
+import logging
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Update with the appropriate origin URL
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
+logger = logging.getLogger(__name__)
+
+# Load the pre-trained car classifier
+car_cascade = cv2.CascadeClassifier('./haarcascade_car.xml')
 
 class Drone(BaseModel):
     id: int
@@ -27,58 +26,91 @@ class Drone(BaseModel):
 class DroneId(BaseModel):
     id: int
 
-connected_drones = [
-    Drone(
-        id=1,
-        name="Drone 1",
-        ipAddress="1.1.1.1",
-        alert=False,
-        batteryStatus=50,
-        connectionStatus=10
-    ),
-    Drone(
-        id=2,
-        name="Drone 2",
-        ipAddress="1.1.1.1",
-        alert=True,
-        batteryStatus=50,
-        connectionStatus=50
-    ),
-    Drone(
-        id=3,
-        name="Drone 3",
-        ipAddress="1.1.1.1",
-        alert=False,
-        batteryStatus=100,
-        connectionStatus=100
-    )
-]
+class DroneManager():
+    def __init__(self) -> None:
+        
+        TELLO_IP = '192.168.10.1'
+        self.tello = None
 
-# Load the pre-trained car classifier
-car_cascade = cv2.CascadeClassifier('./haarcascade_car.xml')
+        try:
+            logger.error(f"Attempting connection to Tello Drone - Host: '{TELLO_IP}'.")
+            self.tello = Tello(host=TELLO_IP,retry_count=2)
+            self.tello.connect()
+            logger.error(f"Conncted to Tello Drone - Host: '{TELLO_IP}'.")
+        except:
+            logger.error(f"Couldn't connect to Tello Drone - Host: '{TELLO_IP}'.")
+
+        self.connected_drones = [
+            Drone(
+                id=1,
+                name="Tello Drone 1",
+                ipAddress=TELLO_IP,
+                alert=False,
+                batteryStatus=50,
+                connectionStatus=10
+            ),
+            Drone(
+                id=2,
+                name="Drone 2",
+                ipAddress="1.1.1.1",
+                alert=True,
+                batteryStatus=50,
+                connectionStatus=50
+            ),
+            Drone(
+                id=3,
+                name="Drone 3",
+                ipAddress="1.1.1.1",
+                alert=False,
+                batteryStatus=100,
+                connectionStatus=100
+            )
+        ]
+
+drone_manager = DroneManager()
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Update with the appropriate origin URL
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 
 @app.post("/drones/swarmdrone")
-async def swarm_drone():
+async def swarm_drone(droneid: DroneId):
     # Handle the swarm drone request
     # Your logic goes here
+    logger.debug(f"Drone swarm request received for Drone.id:{droneid.id}")
     return {"message": "Drone swarm request received"}
 
 @app.post("/drones/ignore")
 async def ignore(droneid: DroneId):
     # Handle the ignore request
     # Your logic goes here
-    print(droneid.id)
+    logger.debug(f"Ignore request received for Drone.id:{droneid.id}")
+    drone_manager.tello.land()
     return {"message": "Ignore request received"}
 
 @app.post("/drones/keep-tracking")
-async def keep_tracking():
+async def keep_tracking(droneid: DroneId):
     # Handle the keep tracking request
     # Your logic goes here
+    logger.debug(f"Keep tracking request received for Drone.id:{droneid.id}")
+    drone_manager.tello.takeoff()
     return {"message": "Keep tracking request received"}
 
 @app.get("/drones")
 async def get_drones():
-    return connected_drones
+    await update_drones()
+    return drone_manager.connected_drones
+
+async def update_drones():
+    tello_drone = drone_manager.connected_drones[1]
+    # tello_drone.batteryStatus = drone_manager.tello.query_battery()
+    # tello_drone.connectionStatus = self.tello.query_wifi_signal_noise_ratio()
 
 @app.get("/drone/video_feed")
 async def video_feed():
@@ -132,4 +164,4 @@ async def video_feed():
     return StreamingResponse(stream_generator(), media_type=content_type)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="localhost", port=8000, log_level="info")
