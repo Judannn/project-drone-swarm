@@ -37,7 +37,7 @@ class DroneManager():
         try:
             logger.error(f"Attempting connection to Tello Drone - Host: '{TELLO_IP}'.")
             self.tello = TelloDrone()
-            # self.tello = TelloDrone(host=TELLO_IP,retry_count=2)
+            # self.tello = Tello(host=TELLO_IP,retry_count=2)
             self.tello.connect()
             logger.error(f"Conncted to Tello Drone - Host: '{TELLO_IP}'.")
         except:
