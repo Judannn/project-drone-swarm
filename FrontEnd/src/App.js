@@ -320,7 +320,7 @@ function App() {
             display="flex"
             justifyContent="center"
             alignItems="flex-start" // Align to the top
-            height="" // Adjust the height to fit your layout
+            height="100%" // Adjust the height to fit your layout
           >
             <div className="player-wrapper">
               <VideoPlayer />
