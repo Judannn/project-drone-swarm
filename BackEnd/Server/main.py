@@ -5,8 +5,10 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import asyncio
-from djitellopy import Tello
-# from BackEnd.Drone.diploma-project-drone-swarm.mock.drone import TelloDrone
+# from djitellopy import Tello
+import sys
+sys.path.append("diploma-project-drone-swarm/mock")
+from drone import TelloDrone
 
 import logging
 
@@ -34,7 +36,8 @@ class DroneManager():
 
         try:
             logger.error(f"Attempting connection to Tello Drone - Host: '{TELLO_IP}'.")
-            self.tello = Tello(host=TELLO_IP,retry_count=2)
+            self.tello = TelloDrone()
+            # self.tello = TelloDrone(host=TELLO_IP,retry_count=2)
             self.tello.connect()
             logger.error(f"Conncted to Tello Drone - Host: '{TELLO_IP}'.")
         except:
