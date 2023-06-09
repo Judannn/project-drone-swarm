@@ -5,10 +5,8 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import asyncio
-# from djitellopy import Tello
-import sys
-sys.path.append("diploma-project-drone-swarm/mock")
-from drone import TelloDrone
+from djitellopy import Tello
+
 
 import logging
 
@@ -31,13 +29,12 @@ class DroneId(BaseModel):
 class DroneManager():
     def __init__(self) -> None:
         
-        TELLO_IP = '192.168.10.1'
+        TELLO_IP = '10.25.35.130'
         self.tello = None
 
         try:
             logger.error(f"Attempting connection to Tello Drone - Host: '{TELLO_IP}'.")
-            self.tello = TelloDrone()
-            # self.tello = Tello(host=TELLO_IP,retry_count=2)
+            self.tello = Tello(host=TELLO_IP,retry_count=2)
             self.tello.connect()
             logger.error(f"Conncted to Tello Drone - Host: '{TELLO_IP}'.")
         except:
@@ -112,8 +109,8 @@ async def get_drones():
 
 async def update_drones():
     tello_drone = drone_manager.connected_drones[1]
-    # tello_drone.batteryStatus = drone_manager.tello.query_battery()
-    # tello_drone.connectionStatus = self.tello.query_wifi_signal_noise_ratio()
+    tello_drone.batteryStatus = drone_manager.tello.query_battery()
+    tello_drone.connectionStatus = drone_manager.tello.query_wifi_signal_noise_ratio()
 
 @app.get("/drone/video_feed")
 async def video_feed():

@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/judan/repos/tafe23/semester-1/adv-prog/diploma-project-drone-swarm/BackEnd/Server/.venv"
+VIRTUAL_ENV="/home/judan/repos/tafe/semester-1/advanced-programing-techniques/assigments/diploma-project-drone-swarm/BackEnd/Server/.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

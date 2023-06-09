@@ -1,4 +1,6 @@
-#!/home/judan/repos/tafe23/semester-1/adv-prog/diploma-project-drone-swarm/BackEnd/Server/.venv/bin/python3
+#!/bin/sh
+'''exec' /home/judan/repos/tafe/semester-1/advanced-programing-techniques/assigments/diploma-project-drone-swarm/BackEnd/Server/.venv/bin/python3 "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys
