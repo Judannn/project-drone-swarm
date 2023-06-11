@@ -13,7 +13,6 @@ fastapi==0.96.0
 Flask==2.3.2
 Flask-SQLAlchemy==3.0.3
 greenlet==2.0.2
-gyp==0.1
 h11==0.14.0
 idna==3.4
 itsdangerous==2.1.2

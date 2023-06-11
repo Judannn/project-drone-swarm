@@ -34,10 +34,11 @@ class DroneManager():
 
         try:
             logger.error(f"Attempting connection to Tello Drone - Host: '{TELLO_IP}'.")
-            self.tello = Tello(host=TELLO_IP,retry_count=2)
+            self.tello = Tello(host=TELLO_IP,retry_count=1)
             self.tello.connect()
             logger.error(f"Conncted to Tello Drone - Host: '{TELLO_IP}'.")
         except:
+            self.tello = None
             logger.error(f"Couldn't connect to Tello Drone - Host: '{TELLO_IP}'.")
 
         self.connected_drones = [
@@ -79,32 +80,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/drones/swarmdrone")
-async def swarm_drone(droneid: DroneId):
-    # Handle the swarm drone request
-    # Your logic goes here
-    logger.debug(f"Drone swarm request received for Drone.id:{droneid.id}")
-    return {"message": "Drone swarm request received"}
-
-@app.post("/drones/ignore")
+@app.post("/drones/land")
 async def ignore(droneid: DroneId):
     # Handle the ignore request
     # Your logic goes here
-    logger.debug(f"Ignore request received for Drone.id:{droneid.id}")
-    drone_manager.tello.land()
-    return {"message": "Ignore request received"}
+    logger.debug(f"Land request received for Drone.id:{droneid.id}")
+    if drone_manager.tello != None:
+        drone_manager.tello.land()
+    return {"message": "Land request received"}
 
-@app.post("/drones/keep-tracking")
+@app.post("/drones/take_off")
 async def keep_tracking(droneid: DroneId):
     # Handle the keep tracking request
     # Your logic goes here
-    logger.debug(f"Keep tracking request received for Drone.id:{droneid.id}")
-    drone_manager.tello.takeoff()
-    return {"message": "Keep tracking request received"}
+    logger.debug(f"Take off request received for Drone.id:{droneid.id}")
+    if drone_manager.tello != None:
+        drone_manager.tello.takeoff()
+    return {"message": "Take off tracking request received"}
 
 @app.get("/drones")
 async def get_drones():
-    await update_drones()
+    if drone_manager.tello != None:
+        await update_drones()
     return drone_manager.connected_drones
 
 async def update_drones():

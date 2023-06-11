@@ -15,12 +15,12 @@ import {
   ListItemText,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  Switch
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
   MenuRounded,
-  LocationOn,
   Cancel,
   TrackChanges,
   CrisisAlert,
@@ -40,57 +40,61 @@ import {
   Wifi2Bar,
   Wifi,
   ArrowUpward,
-  ArrowDownward
+  ArrowDownward,
+  DarkMode,
+  LightMode
 } from '@mui/icons-material';
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const AppWrapper = styled('div')({
-  flexGrow: 1,
-  overflow:'hidden'
-});
-
-const theme = createTheme();
-
 function App() {
 
-  const handleSwarmDrone = () => {
-    // Send API request to server
-    axios.post('http://localhost:8000/drones/swarmdrone', { id: selectedDrone.id })
-      .then((response) => {
-        console.log('Drone swarm request sent successfully:', response.data);
-      })
-      .catch((error) => {
-        console.error('Failed to send Drone swarm request:', error);
-      });
+  const storedTheme = localStorage.getItem('theme');
+  const [currentTheme, setCurrentTheme] = useState(storedTheme || 'light');
+
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+  const handleToggleTheme = () => {
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    setCurrentTheme(newTheme);
   };
+
+  const theme = createTheme({
+    palette: {
+      mode: currentTheme // Set the default mode to 'light'
+    },
+  });
+
+  const AppWrapper = styled('div')({
+    backgroundColor: theme.palette.mode === 'dark' ? '#222222' : '',
+    height: '100vh'
+  });
 
   const handleIgnore = () => {
     // Send API request to server
-    axios.post('http://localhost:8000/drones/ignore', { id: selectedDrone.id })
+    axios.post('http://localhost:8000/drones/land', { id: selectedDrone.id })
       .then((response) => {
-        console.log('Ignore request sent successfully:', response.data);
+        console.log('Land request sent successfully:', response.data);
       })
       .catch((error) => {
-        console.error('Failed to send ignore request:', error);
+        console.error('Failed to send land request:', error);
       });
   };
 
   const handleKeepTracking = () => {
     // Send API request to server
-    axios.post('http://localhost:8000/drones/keep-tracking', { id: 1 })
+    axios.post('http://localhost:8000/drones/take_off', { id: 1 })
       .then((response) => {
-        console.log('Keep tracking request sent successfully:', response.data);
+        console.log('Take off request sent successfully:', response.data);
       })
       .catch((error) => {
-        console.error('Failed to send keep tracking request:', error);
+        console.error('Failed to send keep take off request:', error);
       });
   };
 
   const isPortrait = useMediaQuery('(orientation: portrait)');
 
   const [topBarVisible, setTopBarVisible] = useState(true);
-
 
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -127,32 +131,41 @@ function App() {
 
   var [connectedDrones, setConnectedDrones] = useState([]);
 
-  const fetchDrones = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/drones');
-      console.log(response);
-      const connectedDrones = response.data;
-      const updatedConnectedDrones = connectedDrones.map((drone) => ({
-        id: drone.id,
-        name: drone.name,
-        ipAddress: drone.ipAddress,
-        alert: drone.alert,
-        batteryStatus: drone.batteryStatus,
-        connectionStatus: drone.connectionStatus,
-      }));
-      setConnectedDrones(updatedConnectedDrones);
+  useEffect(() => {
+    const fetchDrones = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/drones');
+        console.log(response);
+        const connectedDrones = response.data;
+        const updatedConnectedDrones = connectedDrones.map((drone) => ({
+          id: drone.id,
+          name: drone.name,
+          ipAddress: drone.ipAddress,
+          alert: drone.alert,
+          batteryStatus: drone.batteryStatus,
+          connectionStatus: drone.connectionStatus,
+        }));
+        setConnectedDrones(updatedConnectedDrones);
+  
+        const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
+        setSelectedDrone(updatedSelectedDrone);
+      } catch (error) {
+        console.error('Failed to fetch drones:', error);
+      }
+    };
 
-      const updatedSelectedDrone = connectedDrones.find((drone) => drone.id === selectedDrone.id);
-      setSelectedDrone(updatedSelectedDrone);
-    } catch (error) {
-      console.error('Failed to fetch drones:', error);
-    }
-  };
+    // const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
+    // return () => clearInterval(intervalId); // Clean up the interval when component unmounts
+  }, [selectedDrone.id]);
 
   useEffect(() => {
-    const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
-    return () => clearInterval(intervalId); // Clean up the interval when component unmounts
-  });
+    localStorage.setItem('theme', currentTheme);
+    if (prefersDarkMode) {
+      theme.palette.mode = 'dark'; // Set the theme mode to 'dark' if the user prefers dark mode
+    } else {
+      theme.palette.mode = 'light'; // Set the theme mode to 'light' if the user prefers light mode
+    }
+  }, [prefersDarkMode, currentTheme, theme.palette]);
 
   const getStatusIcon = (status, isBattery) => {
     const statusMappings = {
@@ -224,19 +237,23 @@ function App() {
     );
   };
 
+  const iconStyle = {
+    marginTop: '-2px',
+    marginLeft: '-2px',
+  };
+
   const VideoPlayer = () => {
     const videoFeedUrl = 'http://localhost:8000/drone/video_feed';
   
-    const isPortrait = useMediaQuery('(orientation: portrait)');
     const wrapperStyles = {
+      position: 'relative',
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'flex-start', // Align to the top
-      height: isPortrait ? 'auto' : '100vh', // Adjust the height to fit your layout
     };
     const videoStyles = {
-      maxWidth: '100%',
-      maxHeight: '100%',
+      maxWidth: '100vh',
+      height: '100%',
+      borderRadius: '5px',
     };
   
     return (
@@ -302,6 +319,14 @@ function App() {
               ))}
             </Menu>
             <Typography variant="h6" align="center" flexGrow="1">{selectedDrone.name}</Typography>
+            <Switch
+              checked={currentTheme === 'light'}
+              onChange={handleToggleTheme}
+              edge="end"
+              color="default"
+              icon={<LightMode style={iconStyle}/>}
+              checkedIcon={<DarkMode style={iconStyle}/>}
+            />
             <IconButton
               size="large"
               edge="end"
@@ -316,137 +341,113 @@ function App() {
           </Toolbar>
         </AppBar>
         <Box position="relative">
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="flex-start" // Align to the top
-            height="100%" // Adjust the height to fit your layout
-          >
-            <div className="player-wrapper">
+            <div height='50px'>
               <VideoPlayer />
             </div>
-              <Stack spacing={1} position="absolute" top={8} left={8} direction="row">
-                <Box
-                  backgroundColor='rgba(0, 0, 0, 0.5)'
-                  color='#FFFFFF'
-                  backdropFilter="blur(4px)"
-                  borderRadius="4px"
-                  p={1}
-                >
-                  {getStatusIcon(selectedDrone.connectionStatus, false)}
-                </Box>
-                <Box
-                  backgroundColor='rgba(0, 0, 0, 0.5)'
-                  color='#FFFFFF'
-                  backdropFilter="blur(4px)"
-                  borderRadius="4px"
-                  p={1}
-                >
-                  {getStatusIcon(selectedDrone.batteryStatus, true)}
-                </Box>
-                
-              </Stack>
-              <Box position="absolute" top={8} right={8}>
-                <Box
-                    backgroundColor='rgba(0, 0, 0, 0.5)'
-                    color='#FFFFFF'
-                    backdropFilter="blur(4px)"
-                    borderRadius="4px"
-                  >
-                    <IconButton
-                      size="small"
-                      color="inherit"
-                      aria-label="toggle-top-bar"
-                      onClick={() => setTopBarVisible(!topBarVisible)}
-                    >
-                      {topBarVisible ? <ArrowUpward /> : <ArrowDownward />}
-                    </IconButton>
-                  </Box>
+            <Stack spacing={1} position="absolute" top={8} left={8} direction="row">
+              <Box
+                backgroundColor='rgba(0, 0, 0, 0.5)'
+                color='#FFFFFF'
+                backdropFilter="blur(4px)"
+                borderRadius="4px"
+                p={1}
+              >
+                {getStatusIcon(selectedDrone.connectionStatus, false)}
               </Box>
-          </Box>
+              <Box
+                backgroundColor='rgba(0, 0, 0, 0.5)'
+                color='#FFFFFF'
+                backdropFilter="blur(4px)"
+                borderRadius="4px"
+                p={1}
+              >
+                {getStatusIcon(selectedDrone.batteryStatus, true)}
+              </Box>
+              
+            </Stack>
+            <Box position="absolute" top={8} right={8}>
+              <Box
+                  backgroundColor='rgba(0, 0, 0, 0.5)'
+                  color='#FFFFFF'
+                  backdropFilter="blur(4px)"
+                  borderRadius="4px"
+                >
+                  <IconButton
+                    size="small"
+                    color="inherit"
+                    aria-label="toggle-top-bar"
+                    onClick={() => setTopBarVisible(!topBarVisible)}
+                  >
+                    {topBarVisible ? <ArrowUpward /> : <ArrowDownward />}
+                  </IconButton>
+                </Box>
+            </Box>
           {isPortrait ? (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            p={2}>
-            <Stack
-              direction="row"
-              flexWrap="wrap"
-              gap={2}
-              justifyContent="flex-start">
-              <Button
-                variant="contained"
-                startIcon={<LocationOn />}
-                onClick={handleSwarmDrone}>
-                Swarm Drone
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<Cancel />}
-                onClick={handleIgnore}>
-                Ignore
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<TrackChanges />}
-                onClick={handleKeepTracking}>
-                Keep-Tracking
-              </Button>
-            </Stack>
-          </Box>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              p={2}>
+              <Stack
+                direction="row"
+                flexWrap="wrap"
+                gap={2}
+                justifyContent="flex-start">
+                <Button
+                  variant="contained"
+                  startIcon={<Cancel />}
+                  onClick={handleIgnore}>
+                  Land
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<TrackChanges />}
+                  onClick={handleKeepTracking}>
+                  Take Off
+                </Button>
+              </Stack>
+            </Box>
         ) : (
-          <Box
-            position="absolute"
-            bottom={8}
-            left={16}
-            display="flex"
-            justifyContent="center"
-            width="100%"
-          >
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant="contained"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  color: '#FFFFFF',
-                  border: '1px solid #000000',
-                  backdropFilter: 'blur(4px)',
-                }}
-                startIcon={<LocationOn />}
-                onClick={handleSwarmDrone}
-              >
-                Swarm Drone
-              </Button>
-              <Button
-                variant="contained"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  color: '#FFFFFF',
-                  border: '1px solid #000000',
-                  backdropFilter: 'blur(4px)',
-                }}
-                startIcon={<Cancel />}
-                onClick={handleIgnore}
-              >
-                Ignore
-              </Button>
-              <Button
-                variant="contained"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  color: '#FFFFFF',
-                  border: '1px solid #000000',
-                  backdropFilter: 'blur(4px)',
-                }}
-                startIcon={<TrackChanges />}
-                onClick={handleKeepTracking}
-              >
-                Keep-Tracking
-              </Button>
-            </Stack>
-          </Box>
+            <Box
+              position="absolute"
+              bottom={8}
+              display="flex"
+              justifyContent="center"
+              width="100%"
+            >
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="contained"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    color: '#FFFFFF',
+                    border: '1px solid #000000',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                  startIcon={<Cancel />}
+                  onClick={handleIgnore}
+                >
+                  Land
+                </Button>
+                <Button
+                  variant="contained"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    color: '#FFFFFF',
+                    border: '1px solid #000000',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                  startIcon={<TrackChanges />}
+                  onClick={handleKeepTracking}
+                >
+                  Take Off
+                </Button>
+              </Stack>
+            </Box>
         )}
+        </Box>
+        <Box flex='1' flexGrow='1'>
+
         </Box>
         <SettingsWindow />
       </AppWrapper>
