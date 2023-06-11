@@ -67,7 +67,8 @@ function App() {
 
   const AppWrapper = styled('div')({
     backgroundColor: theme.palette.mode === 'dark' ? '#222222' : '',
-    height: '100vh'
+    display: "block",
+    minHeight: "100vh"
   });
 
   const handleIgnore = () => {
@@ -154,8 +155,8 @@ function App() {
       }
     };
 
-    // const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
-    // return () => clearInterval(intervalId); // Clean up the interval when component unmounts
+    const intervalId = setInterval(fetchDrones, 5000); // Fetch status every 5 seconds
+    return () => clearInterval(intervalId); // Clean up the interval when component unmounts
   }, [selectedDrone.id]);
 
   useEffect(() => {
@@ -250,9 +251,10 @@ function App() {
       display: 'flex',
       justifyContent: 'center',
     };
+
     const videoStyles = {
-      maxWidth: '100vh',
-      height: '100%',
+      maxWidth:"100%",
+      maxHeight:"100%",
       borderRadius: '5px',
     };
   
@@ -340,10 +342,8 @@ function App() {
             </IconButton>
           </Toolbar>
         </AppBar>
-        <Box position="relative">
-            <div height='50px'>
-              <VideoPlayer />
-            </div>
+        <Box justifyContent="center" flexDirection="column" position="relative">
+            <VideoPlayer />
             <Stack spacing={1} position="absolute" top={8} left={8} direction="row">
               <Box
                 backgroundColor='rgba(0, 0, 0, 0.5)'
