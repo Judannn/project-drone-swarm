@@ -1,5 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        "./BackEnd/Drone/diploma-project-drone-swarm/DJITelloPy"
-    ]
-}
