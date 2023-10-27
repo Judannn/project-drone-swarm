@@ -49,7 +49,7 @@ pip install -r requirements.txt
 ```
 3. Navigate to the frontend directory:
 ```bash
-cd diploma-project-drone-swarm/FrontEnd`
+cd diploma-project-drone-swarm/FrontEnd
 ```
 4. Install frontend dependencies:
 ```bash
@@ -60,7 +60,7 @@ npm install
 
 1. Open a new terminal window and navigate to the backend directory:
 ```bash
-cd diploma-project-drone-swarm/BackEnd`
+cd diploma-project-drone-swarm/BackEnd
 ```
 2. Start backend server:
 ```bash
@@ -68,7 +68,7 @@ python main.py
 ```
 3. Open a new terminal window and navigate to the backend directory:
 ```bash
-cd diploma-project-drone-swarm/FrontEnd`
+cd diploma-project-drone-swarm/FrontEnd
 ```
 4. Start frontend server:
 ```bash
