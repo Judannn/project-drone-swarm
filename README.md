@@ -17,7 +17,10 @@ ChatGPT has been used throught all code creation and the prompts / chat can be f
 ## **Design**
 <img src="./Design/Landscape.png" alt="Landscape Design" width="600"/>
 <img src="./Design/Portrait.png" alt="Portrait Design" width="600"/>
-<a href="https://www.figma.com/proto/WVJMK4lT14X71zeyFLAhX5/Drone-Swarm-App?type=design&node-id=54195-34799&scaling=min-zoom&page-id=54195%3A34798&starting-point-node-id=54195%3A34807&show-proto-sidebar=1">Figma Prototype
+<a href="https://www.figma.com/proto/WVJMK4lT14X71zeyFLAhX5/Drone-Swarm-App?type=design&node-id=54195-34799&scaling=min-zoom&page-id=54195%3A34798&starting-point-node-id=54195%3A34807&show-proto1. Navigate to the backend directory:
+```bash
+cd diploma-project-drone-swarm/BackEnd
+```-sidebar=1">Figma Prototype
 </a>
 
 ## **Storyboarding**
@@ -44,11 +47,11 @@ cd diploma-project-drone-swarm/BackEnd
 ```bash
 pip install -r requirements.txt
 ```
-1. Navigate to the frontend directory:
+3. Navigate to the frontend directory:
 ```bash
 cd diploma-project-drone-swarm/FrontEnd`
 ```
-6. Install frontend dependencies:
+4. Install frontend dependencies:
 ```bash
 npm install
 ```
